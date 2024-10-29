@@ -1,7 +1,6 @@
-#include "arduino_secrets.h"
-
 // leg movement for left body motors
 #include <Servo.h>
+#include <NewPing.h>
 
 #define LB1goFront 81
 #define LB2goFront 51
@@ -62,9 +61,32 @@ Servo RA1;
 Servo RA2; 
 Servo RA3; 
 
+#define TRIGGER_PIN_1 A2 
+#define ECHO_PIN_1    A3  
+
+#define TRIGGER_PIN_2 A0 
+#define ECHO_PIN_2    A1  
+
+#define MAX_DISTANCE 200  
+
+NewPing sonar1(TRIGGER_PIN_1, ECHO_PIN_1, MAX_DISTANCE); //for walls
+NewPing sonar2(TRIGGER_PIN_2, ECHO_PIN_2, MAX_DISTANCE);  // for sters 
+
+#define LED A4
+int servoSpeed = 10;
+int count = 0;
+//String command;
+
+void serialReadMCU(){
+
+
+}
+
 void setup() {
 
   Serial.begin(9600);
+
+  pinMode(LED, OUTPUT);
 
   LB1.attach(4);
   LB2.attach(3);
@@ -78,37 +100,163 @@ void setup() {
   RA1.attach(11);
   RA2.attach(12);
   RA3.attach(13);
-  Serial.begin(9600);  
 }
 
 void loop() {
-walkForward();
+//serialReadMCU();
+
+Indicator_Led(40, 45);
 
 
-  if (Serial.available()) {
+ if (Serial.available()) {
     String command = Serial.readStringUntil('\n');  
     command.trim();  
 
-    if(command == "ON") {
-      Serial.println("LED ON");
+     if(command == "stop") {
+    standUp();
     } 
-    else if(command == "OFF") {
-      Serial.println("LED OFF"); 
+    if(command == "move") {
+     robotMove();
     }
 
   }
 
 
-// standUp();
-// delay(2000);
-// standDown();
-// delay(2000);
-// Center();
+ delay(30);
+
 }
 
 
+void robotMove(){
+  unsigned int distance1 = sonar1.ping_cm();
+  unsigned int distance2 = sonar2.ping_cm();
+    if (distance1 < 40) {
+      //turn
+      turn();
+    } 
+
+    else {
+      //go forward
+      walkForward();
+    }
+
+}
+
+void turn(){
+  LA1.write(LA1pullUp);
+  RA3.write(RA3pullUp);
+
+  delay(200);
+
+  LB1.write(LB1goMid);
+  RB3.write(RB3goMid);
+  
+  delay(100);
+
+  LA1.write(LA1pullDown);
+  RA3.write(RA3pullDown);
+
+  delay(200);
+
+  LA2.write(LA2pullDown);
+  RA2.write(RA2pullDown);
+
+  delay(500);
+
+  LB1.write(LB1goFront);
+  RB3.write(RB3goBack);
+
+  LB3.write(LB3goMid);
+  RB1.write(RB1goMid);
+
+  LB2.write(LB2goFront);
+  RB2.write(RB2goBack);
+///////////////////////////////////////////////////////////////
+  delay(200);
+
+  LA2.write(LA2pullUp);
+  RA2.write(RA2pullUp);
+
+  delay(200);
+
+  LB2.write(LB2goMid);
+  RB2.write(RB2goMid);
+
+  delay(100);
+
+  LA2.write(LA2pullDown);
+  RA2.write(RA2pullDown);
+  
+  delay(200);
+
+  RA1.write(RA1pullUp);
+  LA3.write(LA3pullUp);
+
+  delay(100);
+
+  RB1.write(RB1goFront);
+  LB3.write(LB3goBack);
+
+  delay(200);
+
+
+}
 
 void walkForward() {
+
+LA1.write(LA1pullUp);
+LA3.write(LA3pullUp);
+RA2.write(RA2pullUp);
+delay(500);
+
+RB1.write(RB1goMid);
+RB3.write(RB3goBack);
+LB2.write(LB2goBack);
+LA1.write(LA1pullDown);
+
+delay(500);
+
+LA3.write(LA3pullDown);
+RA2.write(RA2pullDown);
+
+delay(500);
+
+LA2.write(LA2pullUp);
+RA1.write(RA1pullUp);
+RA3.write(RA3pullUp);
+
+delay(100);
+
+RB1.write(RB1goFront);
+RB3.write(RB3goMid);
+LB2.write(LB3goMid);
+
+delay(500);
+
+LB1.write(LB1goMid);
+RB2.write(RB2goBack);
+LB3.write(LB3goBack);
+
+RA1.write(RA1pullDown);
+
+delay(500);
+
+LA2.write(LA2pullDown);
+RB2.write(RB2goMid);
+RA2.write(RA2pullUp);
+RA3.write(RA3pullDown);
+
+delay(100);
+
+LA1.write(LA1pullUp);
+LA3.write(LA3pullUp);
+
+LB3.write(LB3goMid);
+LB1.write(LB1goFront);
+RB2.write(RB2goMid);
+
+delay(100);
+
 
 }
 
@@ -120,8 +268,8 @@ void standUp(){
   LB2.write(93);
   RB2.write(89);
 
-  LB3.write(58);
-  RB3.write(109);
+  LB3.write(83);
+  RB3.write(84);
 
   LA1.write(60);
   LA2.write(78);
@@ -150,3 +298,24 @@ void standDown(){
   RA2.write(10);
   RA3.write(100);
 }
+
+void Indicator_Led(int C_start, int C_end){
+
+if (count == C_start){
+  digitalWrite(LED, HIGH);
+}
+
+else if (count == C_end){
+  digitalWrite(LED, LOW);
+  count = 0;
+}
+
+
+count++;
+
+}
+
+
+
+
+
