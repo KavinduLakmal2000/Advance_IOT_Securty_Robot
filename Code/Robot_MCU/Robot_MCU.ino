@@ -35,7 +35,7 @@ int count = 0;
 
 const char* ssid = "SLT_Fiber_Optic";           
 const char* pass = "Life1Mal7i";   
-const char* targetIP = "192.168.1.11";  
+const char* targetIP = "192.168.1.16";  
 
 boolean sleepMode = true;
 boolean securtyMode = false;
@@ -108,7 +108,7 @@ void loop() {
   if (sleepMode) { ///////////////////////////////////////////////////////// sleep mode (call only sensorRead();)
     securtyMode = false;
     powerSave = false;  
-    sensorRead();              
+    sleepMode();
     Blynk.virtualWrite(V7, 0); 
     Blynk.virtualWrite(V9, 0); 
     Serial.println("stop");
@@ -118,7 +118,19 @@ void loop() {
 
 }
 
+void sleepMode(){
+  int adcValue = analogRead(A0);
+  float batteryVoltage = adcValue * (maxBatteryVoltage / maxADCValue);
+  int batteryPercentage = map(batteryVoltage * 100, minBatteryVoltage * 100, maxBatteryVoltage * 100, 0, 100);
 
+  Blynk.virtualWrite(V0, 0);
+  Blynk.virtualWrite(V1, 0);
+  Blynk.virtualWrite(V2, 0);
+  Blynk.virtualWrite(V4, 0);
+  Blynk.virtualWrite(V5, 0);
+  Blynk.virtualWrite(V3, 0);
+  Blynk.virtualWrite(V8, batteryPercentage);
+}
 
 void securty(){
 
