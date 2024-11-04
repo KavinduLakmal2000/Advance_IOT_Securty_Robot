@@ -5,19 +5,18 @@
 // Fire sensor - D6
 // battery voltage - A0
 
-#define BLYNK_TEMPLATE_ID "TMPL6GV8veXRR"
+#define BLYNK_TEMPLATE_ID "test"
 #define BLYNK_TEMPLATE_NAME "Spider"
-#define BLYNK_AUTH_TOKEN "y0HfuxqIifEr-WLh6XruakCrKcT1TW-n"
-
-// #define BLYNK_TEMPLATE_ID "TMPLln-Vhydm"
-// #define BLYNK_DEVICE_NAME "test"
-// #define BLYNK_AUTH_TOKEN "b9tvGjv-42Mytf7RtFeo-GgPrCZZo6Dd"
+#define BLYNK_AUTH_TOKEN "##########################################"
 
 #include <ESP8266WiFi.h>
 #include <ESP8266HTTPClient.h>
 #include <BlynkSimpleEsp8266.h>
 #include <Servo.h>
 #include <DHT.h>
+#include <Wire.h>
+#include <Adafruit_GFX.h>
+#include <Adafruit_SSD1306.h>
 
 
 #define BLYNK_PRINT Serial
@@ -32,9 +31,15 @@ const float maxBatteryVoltage = 8.4;
 const float minBatteryVoltage = 7; 
 const int maxADCValue = 1023;
 int count = 0;
+int currentPosition = 90;
+int randomAngle;
 
 const char* ssid = "SLT_Fiber_Optic";           
-const char* pass = "Life1Mal7i";   
+const char* pass = "Life1Mal7i"; 
+
+// char ssid[] = "4G-MIFI-IOT";
+// char pass[] = "Kl1234567890";
+
 const char* targetIP = "192.168.1.16";  
 
 boolean sleepMode = true;
@@ -45,7 +50,16 @@ WiFiClient client;
 Servo FaceServo;
 #define DHTTYPE DHT11 
 
+#define SCREEN_WIDTH 128
+#define SCREEN_HEIGHT 64
+#define OLED_RESET -1
+
+Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
+
 DHT dht(DHTPIN, DHTTYPE);
+
+int c1 = 0;
+int c2 = 0;
 
 void setup() {
  
@@ -53,6 +67,8 @@ void setup() {
   Serial.setTimeout(10); 
 
   FaceServo.attach(D8);
+  FaceServo.write(currentPosition);
+
   dht.begin();
 
   pinMode(PIR, INPUT);
@@ -72,15 +88,30 @@ void setup() {
   Serial.println("IP address: ");
   Serial.println(WiFi.localIP());  
   digitalWrite(led, HIGH);
+
+  if (!display.begin(SSD1306_SWITCHCAPVCC, 0x3C)) {
+    for (;;);
+  }
+  display.clearDisplay();
+  display.display();
+  delay(1000);
 }
 
 void loop() {
   //Blynk.logEvent("full_charged");
   Blynk.run();
   Indicator_Led(20,21);
-  
-  FaceServo.write(90);
 
+  happyEyes();
+  servoMoveRandom(90, 180);
+  delay(50);
+  blinkEyes();
+  servoMoveRandom(0, 90);
+  delay(50);
+  surprisedEyes();
+  servoMoveRandom(90, 180);
+  delay(50);
+  servoMoveRandom(0, 90);
 
   if (powerSave){///////////////////////////////////////////////////////// power save mode (all sensors working stop moving)
     sleepMode = false;
@@ -108,7 +139,7 @@ void loop() {
   if (sleepMode) { ///////////////////////////////////////////////////////// sleep mode (call only sensorRead();)
     securtyMode = false;
     powerSave = false;  
-    sleepMode();
+    sleepModee();
     Blynk.virtualWrite(V7, 0); 
     Blynk.virtualWrite(V9, 0); 
     Serial.println("stop");
@@ -118,7 +149,7 @@ void loop() {
 
 }
 
-void sleepMode(){
+void sleepModee(){
   int adcValue = analogRead(A0);
   float batteryVoltage = adcValue * (maxBatteryVoltage / maxADCValue);
   int batteryPercentage = map(batteryVoltage * 100, minBatteryVoltage * 100, maxBatteryVoltage * 100, 0, 100);
@@ -136,6 +167,7 @@ void securty(){
 
   if (digitalRead(PIR) == HIGH){
     Blynk.virtualWrite(V4, 1);
+    Blynk.logEvent("m_detect", "Motion");
     //sendPowerCutOff(3);
   }
   else{
@@ -146,6 +178,7 @@ void securty(){
   if (digitalRead(IR) == LOW){
     Blynk.virtualWrite(V5, 1);
     //sendPowerCutOff(2);
+    Blynk.logEvent("ir_detect","Fire");
   }
   else{
     Blynk.virtualWrite(V5, 0);
@@ -155,6 +188,7 @@ void securty(){
 
   if (digitalRead(MQ2) == LOW){
     Blynk.virtualWrite(V3, 1);
+    Blynk.logEvent("gas_detect", "gas");
     //sendPowerCutOff(2);
   }
   else{
@@ -237,6 +271,47 @@ BLYNK_WRITE(V7) {
 
 BLYNK_WRITE(V9) { 
   powerSave = param.asInt(); 
+}
+
+void drawEyes(int eyeSize, int eyeGap) {
+  display.fillRect(25, 20, eyeSize, eyeSize, SSD1306_WHITE);
+  display.fillRect(75 + eyeGap, 20, eyeSize, eyeSize, SSD1306_WHITE);
+}
+
+void clearEyes(int eyeSize, int eyeGap) {
+  display.fillRect(25, 20, eyeSize, eyeSize, SSD1306_BLACK);
+  display.fillRect(75 + eyeGap, 20, eyeSize, eyeSize, SSD1306_BLACK);
+  display.display();
+}
+
+void blinkEyes() {
+  clearEyes(20, 10);
+  delay(100);
+  drawEyes(20, 10);
+  display.display();
+  delay(100);
+}
+
+void happyEyes() {
+  clearEyes(20, 10);
+  drawEyes(15, 10);
+  display.display();
+  delay(200);
+}
+
+void surprisedEyes() {
+  clearEyes(20, 10);
+  drawEyes(25, 10);
+  display.display();
+  delay(200);
+}
+
+void servoMoveRandom(int minAngle, int maxAngle) {
+  randomAngle = random(minAngle, maxAngle + 1);
+  FaceServo.write(randomAngle);
+  delay(200);
+  FaceServo.write(90);
+  delay(200);
 }
 
 
