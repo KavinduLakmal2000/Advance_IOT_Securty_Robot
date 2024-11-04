@@ -75,10 +75,16 @@ NewPing sonar2(TRIGGER_PIN_2, ECHO_PIN_2, MAX_DISTANCE);  // for sters
 #define LED A4
 int servoSpeed = 10;
 int count = 0;
-//String command;
+int c2 = 0;
+int c3 = 0;
+String command;
 
 void serialReadMCU(){
-
+ if (Serial.available()) {
+    command = Serial.readStringUntil('\n');  
+    command.trim();  
+    Indicator_Led(40, 45);
+  }
 
 }
 
@@ -100,17 +106,15 @@ void setup() {
   RA1.attach(11);
   RA2.attach(12);
   RA3.attach(13);
+
+startUp();
+delay(4000);
+
 }
 
 void loop() {
-//serialReadMCU();
-
 Indicator_Led(40, 45);
-
-
- if (Serial.available()) {
-    String command = Serial.readStringUntil('\n');  
-    command.trim();  
+serialReadMCU();
 
      if(command == "stop") {
     standUp();
@@ -119,49 +123,137 @@ Indicator_Led(40, 45);
      robotMove();
     }
 
-  }
-
-
  delay(30);
 
 }
 
-
 void robotMove(){
   unsigned int distance1 = sonar1.ping_cm();
   unsigned int distance2 = sonar2.ping_cm();
-    if (distance1 < 40) {
+
+  // if (distance2 > 100){
+  //   standUp();
+  // }
+ // else{
+    if (distance1 < 50) {
       //turn
+
+      if(c2 < 1){
+      standUp();
+      }
+      c2++;
+      c3 = 0;
+
       turn();
     } 
 
     else {
       //go forward
+
+      if (c3 < 1){
+        standUp();
+      }
+      c3++;
+      c2 = 0;
+
       walkForward();
+    
     }
+ // }
 
 }
+
+void startUp(){
+  LA1.write(LA1pullUp);
+  LA2.write(LA2pullUp);
+  LA3.write(LA3pullUp);
+
+  RA1.write(RA1pullUp);
+  RA2.write(RA2pullUp);
+  RA3.write(RA3pullUp);
+  delay(1000);
+
+  LA2.write(120);
+  RA2.write(50);
+
+  LB1.write(LB1goMid);
+  LB2.write(LB2goMid);
+  LB3.write(LB3goMid);
+
+  RB1.write(RB1goMid);
+  RB2.write(RB2goMid);
+  RB3.write(RB3goMid);
+
+  LA2.write(LA2pullUp);
+  RA2.write(RA2pullUp);
+  delay(1000);
+
+  LA1.write(LA1pullDown);
+  LA2.write(LA2pullDown);
+  LA3.write(LA3pullDown);
+
+  RA1.write(RA1pullDown);
+  RA2.write(RA2pullDown);
+  RA3.write(RA3pullDown);
+
+  delay(1000);
+
+  LA1.write(LA1pullUp);
+  delay(500);
+  LB1.write(LB1goFront);
+  delay(500);
+  LA1.write(LA1pullDown);
+
+  delay(1000);
+
+  RA3.write(RA3pullUp);
+  delay(500);
+  RB3.write(RB3goBack);
+  delay(500);
+  RA3.write(RA3pullDown);
+
+  delay(1000);
+
+  LA3.write(LA3pullUp);
+  delay(500);
+  LB3.write(LB3goBack);
+  delay(500);
+  LA3.write(LA3pullDown);
+
+  delay(1000);
+
+  RA1.write(RA1pullUp);
+  delay(500);
+  RB1.write(RB1goFront);
+  delay(500);
+  RA1.write(RA1pullDown);
+
+}
+
+
 
 void turn(){
   LA1.write(LA1pullUp);
   RA3.write(RA3pullUp);
 
   delay(200);
-
+  serialReadMCU();
   LB1.write(LB1goMid);
   RB3.write(RB3goMid);
   
   delay(100);
+  serialReadMCU();
 
   LA1.write(LA1pullDown);
   RA3.write(RA3pullDown);
 
   delay(200);
-
+  serialReadMCU();
   LA2.write(LA2pullDown);
   RA2.write(RA2pullDown);
 
   delay(500);
+  serialReadMCU();
 
   LB1.write(LB1goFront);
   RB3.write(RB3goBack);
@@ -173,31 +265,37 @@ void turn(){
   RB2.write(RB2goBack);
 ///////////////////////////////////////////////////////////////
   delay(200);
+  serialReadMCU();
 
   LA2.write(LA2pullUp);
   RA2.write(RA2pullUp);
 
   delay(200);
+  serialReadMCU();
 
   LB2.write(LB2goMid);
   RB2.write(RB2goMid);
 
   delay(100);
+  serialReadMCU();
 
   LA2.write(LA2pullDown);
   RA2.write(RA2pullDown);
   
   delay(200);
+  serialReadMCU();
 
   RA1.write(RA1pullUp);
   LA3.write(LA3pullUp);
 
   delay(100);
+  serialReadMCU();
 
   RB1.write(RB1goFront);
   LB3.write(LB3goBack);
 
   delay(200);
+  serialReadMCU();
 
 
 }
@@ -208,6 +306,7 @@ LA1.write(LA1pullUp);
 LA3.write(LA3pullUp);
 RA2.write(RA2pullUp);
 delay(500);
+serialReadMCU();
 
 RB1.write(RB1goMid);
 RB3.write(RB3goBack);
@@ -215,23 +314,27 @@ LB2.write(LB2goBack);
 LA1.write(LA1pullDown);
 
 delay(500);
+serialReadMCU();
 
 LA3.write(LA3pullDown);
 RA2.write(RA2pullDown);
 
 delay(500);
+serialReadMCU();
 
 LA2.write(LA2pullUp);
 RA1.write(RA1pullUp);
 RA3.write(RA3pullUp);
 
 delay(100);
+serialReadMCU();
 
 RB1.write(RB1goFront);
 RB3.write(RB3goMid);
 LB2.write(LB3goMid);
 
 delay(500);
+serialReadMCU();
 
 LB1.write(LB1goMid);
 RB2.write(RB2goBack);
@@ -240,6 +343,7 @@ LB3.write(LB3goBack);
 RA1.write(RA1pullDown);
 
 delay(500);
+serialReadMCU();
 
 LA2.write(LA2pullDown);
 RB2.write(RB2goMid);
@@ -247,6 +351,7 @@ RA2.write(RA2pullUp);
 RA3.write(RA3pullDown);
 
 delay(100);
+serialReadMCU();
 
 LA1.write(LA1pullUp);
 LA3.write(LA3pullUp);
@@ -256,6 +361,7 @@ LB1.write(LB1goFront);
 RB2.write(RB2goMid);
 
 delay(100);
+serialReadMCU();
 
 
 }
