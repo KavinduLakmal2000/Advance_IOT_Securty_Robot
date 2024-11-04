@@ -20,6 +20,10 @@ the robot's high-power demands. With the robot's 12 high-torque servomotors, the
 charging unit provides efficient, stable power while maintaining lightweight batteries, 
 ensuring both long-term performance and safety during operation.
 
+![image](https://github.com/user-attachments/assets/de411187-4d21-4261-a085-240686f9354e)
+
+![image](https://github.com/user-attachments/assets/60a164d1-b857-4245-93ef-f615f53fea21)
+
 
 Balance Charger for the robot
 
